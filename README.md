@@ -1,5 +1,5 @@
 # hid-sony
-This is the upstream hid-sony driver with support for Rock Band 4 PS4 guitars
+This is the upstream hid-sony driver with support for Rock Band 4 PS4/PS5 guitars
 
 # Building
 ```
