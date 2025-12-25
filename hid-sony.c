@@ -63,6 +63,7 @@
 #define GHL_GUITAR_PS3WIIU        BIT(15)
 #define GHL_GUITAR_PS4            BIT(16)
 #define RB4_GUITAR_PS4            BIT(17)
+#define RB4_GUITAR_PS5            BIT(18)
 
 #define SIXAXIS_CONTROLLER (SIXAXIS_CONTROLLER_USB | SIXAXIS_CONTROLLER_BT)
 #define MOTION_CONTROLLER (MOTION_CONTROLLER_USB | MOTION_CONTROLLER_BT)
@@ -608,7 +609,7 @@ static int ghl_init_urb(struct sony_sc *sc, struct usb_device *usbdev,
 	return 0;
 }
 
-static int ghguitar_mapping(struct hid_device *hdev, struct hid_input *hi,
+static int gh_guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
 			  struct hid_field *field, struct hid_usage *usage,
 			  unsigned long **bit, int *max)
 {
@@ -623,7 +624,7 @@ static int ghguitar_mapping(struct hid_device *hdev, struct hid_input *hi,
 	return 0;
 }
 
-static int rb4guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
+static int rb4_guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
 			  struct hid_field *field, struct hid_usage *usage,
 			  unsigned long **bit, int *max)
 
@@ -971,7 +972,7 @@ static void nsg_mrxu_parse_report(struct sony_sc *sc, u8 *rd, int size)
 	input_sync(sc->touchpad);
 }
 
-static void rb4_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
+static void rb4_ps4_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
 {
 	/*
 	 * Rock Band 4 PS4 guitars have whammy and
@@ -986,6 +987,23 @@ static void rb4_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
 
 	input_sync(sc->input_dev);
 }
+
+static void rb4_ps5_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
+{
+	/*
+	 * Rock Band 4 PS5 guitars have whammy and
+	 * tilt functionality, they're located at
+	 * byte 41 and 42 respectively.
+	 * We will map these values to the triggers
+	 * because the guitars don't have anything
+	 * mapped there
+	 */
+	input_report_abs(sc->input_dev, ABS_Z, rd[41]);
+	input_report_abs(sc->input_dev, ABS_RZ, rd[42]);
+
+	input_sync(sc->input_dev);
+}
+
 
 static int sony_raw_event(struct hid_device *hdev, struct hid_report *report,
 		u8 *rd, int size)
@@ -1023,7 +1041,10 @@ static int sony_raw_event(struct hid_device *hdev, struct hid_report *report,
 		nsg_mrxu_parse_report(sc, rd, size);
 		return 1;
 	} else if ((sc->quirks & RB4_GUITAR_PS4) && rd[0] == 0x01 && size == 64) {
-		rb4_guitar_parse_report(sc, rd, size);
+		rb4_ps4_guitar_parse_report(sc, rd, size);
+		return 1;
+	} else if ((sc->quirks & RB4_GUITAR_PS5) && rd[0] == 0x01 && size == 64) {
+		rb4_ps5_guitar_parse_report(sc, rd, size);
 		return 1;
 	}
 
@@ -1074,10 +1095,13 @@ static int sony_mapping(struct hid_device *hdev, struct hid_input *hi,
 		return sixaxis_mapping(hdev, hi, field, usage, bit, max);
 
 	if (sc->quirks & GH_GUITAR_CONTROLLER)
-		return ghguitar_mapping(hdev, hi, field, usage, bit, max);
+		return gh_guitar_mapping(hdev, hi, field, usage, bit, max);
 
 	if (sc->quirks & RB4_GUITAR_PS4)
-		return rb4guitar_mapping(hdev, hi, field, usage, bit, max);
+		return rb4_guitar_mapping(hdev, hi, field, usage, bit, max);
+
+	if (sc->quirks & RB4_GUITAR_PS5)
+		return rb4_guitar_mapping(hdev, hi, field, usage, bit, max);
 
 	/* Let hid-core decide for the others */
 	return 0;
@@ -2094,7 +2118,8 @@ static int sony_input_configured(struct hid_device *hdev,
 
 	} else if (sc->quirks & MOTION_CONTROLLER) {
 		sony_init_output_report(sc, motion_send_output_report);
-	} else if (sc->quirks & RB4_GUITAR_PS4) {
+	} else if ((sc->quirks & RB4_GUITAR_PS4) ||
+			   (sc->quirks & RB4_GUITAR_PS5)) {
 		sc->input_dev = hidinput->input;
 	}
 
@@ -2358,6 +2383,9 @@ static const struct hid_device_id sony_devices[] = {
 		.driver_data = RB4_GUITAR_PS4 },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_MADCATZ, USB_DEVICE_ID_MADCATZ_PS4_STRATOCOASTER_DONGLE),
 		.driver_data = RB4_GUITAR_PS4 },
+	/* Rock Band 4 PS5 guitar dongles */
+	{ HID_USB_DEVICE(USB_VENDOR_ID_PDP, USB_DEVICE_ID_PDP_PS5_RIFFMASTER_DONGLE),
+		.driver_data = RB4_GUITAR_PS5 },
 	{ }
 };
 MODULE_DEVICE_TABLE(hid, sony_devices);
