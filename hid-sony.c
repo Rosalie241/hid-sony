@@ -2383,8 +2383,12 @@ static const struct hid_device_id sony_devices[] = {
 		.driver_data = RB4_GUITAR_PS4 },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_MADCATZ, USB_DEVICE_ID_MADCATZ_PS4_STRATOCOASTER_DONGLE),
 		.driver_data = RB4_GUITAR_PS4 },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CRKD, USB_DEVICE_ID_CRKD_PS4_GIBSON_SG),
+		.driver_data = RB4_GUITAR_PS4 },
 	/* Rock Band 4 PS5 guitar dongles */
 	{ HID_USB_DEVICE(USB_VENDOR_ID_PDP, USB_DEVICE_ID_PDP_PS5_RIFFMASTER_DONGLE),
+		.driver_data = RB4_GUITAR_PS5 },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_CRKD, USB_DEVICE_ID_CRKD_PS5_GIBSON_SG),
 		.driver_data = RB4_GUITAR_PS5 },
 	{ }
 };
