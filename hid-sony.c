@@ -978,9 +978,10 @@ static void rb4_ps4_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
 	 * Rock Band 4 PS4 guitars have whammy and
 	 * tilt functionality, they're located at
 	 * byte 44 and 45 respectively.
+	 *
 	 * We will map these values to the triggers
 	 * because the guitars don't have anything
-	 * mapped there
+	 * mapped there.
 	 */
 	input_report_abs(sc->input_dev, ABS_Z, rd[44]);
 	input_report_abs(sc->input_dev, ABS_RZ, rd[45]);
@@ -994,16 +995,16 @@ static void rb4_ps5_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
 	 * Rock Band 4 PS5 guitars have whammy and
 	 * tilt functionality, they're located at
 	 * byte 41 and 42 respectively.
+	 *
 	 * We will map these values to the triggers
 	 * because the guitars don't have anything
-	 * mapped there
+	 * mapped there.
 	 */
 	input_report_abs(sc->input_dev, ABS_Z, rd[41]);
 	input_report_abs(sc->input_dev, ABS_RZ, rd[42]);
 
 	input_sync(sc->input_dev);
 }
-
 
 static int sony_raw_event(struct hid_device *hdev, struct hid_report *report,
 		u8 *rd, int size)
