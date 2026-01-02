@@ -14,7 +14,7 @@
  *  Copyright (c) 2020-2021 Pascal Giard <pascal.giard@etsmtl.ca>
  *  Copyright (c) 2020 Sanjay Govind <sanjay.govind9@gmail.com>
  *  Copyright (c) 2021 Daniel Nguyen <daniel.nguyen.1@ens.etsmtl.ca>
- *  Copyright (c) 2025 Rosalie Wanders <rosalie@mailbox.org>
+ *  Copyright (c) 2026 Rosalie Wanders <rosalie@mailbox.org>
  */
 
 /*
@@ -421,12 +421,12 @@ static const unsigned int sixaxis_keymap[] = {
 	[0x11] = BTN_MODE, /* PS */
 };
 
-static const unsigned int rb4_ps4_absmap[] = {
+static const unsigned int rb4_absmap[] = {
 	[0x30] = ABS_X,
 	[0x31] = ABS_Y,
 };
 
-static const unsigned int rb4_ps4_keymap[] = {
+static const unsigned int rb4_keymap[] = {
 	[0x1] = BTN_WEST, /* Square */
 	[0x2] = BTN_SOUTH, /* Cross */
 	[0x3] = BTN_EAST, /* Circle */
@@ -627,15 +627,14 @@ static int gh_guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
 static int rb4_guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
 			  struct hid_field *field, struct hid_usage *usage,
 			  unsigned long **bit, int *max)
-
 {
 	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
 		unsigned int key = usage->hid & HID_USAGE;
 
-		if (key >= ARRAY_SIZE(rb4_ps4_keymap))
+		if (key >= ARRAY_SIZE(rb4_keymap))
 			return 0;
 
-		key = rb4_ps4_keymap[key];
+		key = rb4_keymap[key];
 		hid_map_usage_clear(hi, usage, bit, max, EV_KEY, key);
 		return 1;
 	} else if ((usage->hid & HID_USAGE_PAGE) == HID_UP_GENDESK) {
@@ -645,10 +644,10 @@ static int rb4_guitar_mapping(struct hid_device *hdev, struct hid_input *hi,
 		if (usage->hid == HID_GD_HATSWITCH)
 			return 0;
 
-		if (abs >= ARRAY_SIZE(rb4_ps4_absmap))
+		if (abs >= ARRAY_SIZE(rb4_absmap))
 			return 0;
 
-		abs = rb4_ps4_absmap[abs];
+		abs = rb4_absmap[abs];
 		hid_map_usage_clear(hi, usage, bit, max, EV_ABS, abs);
 		return 1;
 	}
@@ -2119,8 +2118,7 @@ static int sony_input_configured(struct hid_device *hdev,
 
 	} else if (sc->quirks & MOTION_CONTROLLER) {
 		sony_init_output_report(sc, motion_send_output_report);
-	} else if ((sc->quirks & RB4_GUITAR_PS4) ||
-			   (sc->quirks & RB4_GUITAR_PS5)) {
+	} else if (sc->quirks & (RB4_GUITAR_PS4 | RB4_GUITAR_PS5)) {
 		sc->input_dev = hidinput->input;
 	}
 
@@ -2377,12 +2375,12 @@ static const struct hid_device_id sony_devices[] = {
 	/* Guitar Hero Live PS4 guitar dongles */
 	{ HID_USB_DEVICE(USB_VENDOR_ID_REDOCTANE, USB_DEVICE_ID_REDOCTANE_PS4_GHLIVE_DONGLE),
 		.driver_data = GHL_GUITAR_PS4 | GH_GUITAR_CONTROLLER },
-	/* Rock Band 4 PS4 guitar dongles */
+	/* Rock Band 4 PS4 guitars */
 	{ HID_USB_DEVICE(USB_VENDOR_ID_PDP, USB_DEVICE_ID_PDP_PS4_RIFFMASTER),
 		.driver_data = RB4_GUITAR_PS4 },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_CRKD, USB_DEVICE_ID_CRKD_PS4_GIBSON_SG),
 		.driver_data = RB4_GUITAR_PS4 },
-	/* Rock Band 4 PS5 guitar dongles */
+	/* Rock Band 4 PS5 guitars */
 	{ HID_USB_DEVICE(USB_VENDOR_ID_PDP, USB_DEVICE_ID_PDP_PS5_RIFFMASTER),
 		.driver_data = RB4_GUITAR_PS5 },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_CRKD, USB_DEVICE_ID_CRKD_PS5_GIBSON_SG),
