@@ -7,4 +7,5 @@ echo "-> Building module..."
 make
 
 echo "-> Loading module..."
+sudo modprobe ff-memless || true
 sudo insmod ./hid-sony.ko

@@ -64,6 +64,7 @@
 #define GHL_GUITAR_PS4            BIT(16)
 #define RB4_GUITAR_PS4            BIT(17)
 #define RB4_GUITAR_PS5            BIT(18)
+#define RB4_DRUMSET_PS4			  BIT(19)
 
 #define SIXAXIS_CONTROLLER (SIXAXIS_CONTROLLER_USB | SIXAXIS_CONTROLLER_BT)
 #define MOTION_CONTROLLER (MOTION_CONTROLLER_USB | MOTION_CONTROLLER_BT)
@@ -1005,6 +1006,25 @@ static void rb4_ps5_guitar_parse_report(struct sony_sc *sc, u8 *rd, int size)
 	input_sync(sc->input_dev);
 }
 
+static void rb4_ps4_drumset_parse_report(struct sony_sc *sc, u8 *rd, int size)
+{
+	/*
+	 * Rock Band 4 PS4 drum sets have 3 cymbal
+	 * attachments, they're located at
+	 * byte 47, 48 and 49 respectively.
+	 *
+	 * We will map these attachments like 
+	 * the pads alongside the right joystick click
+	 */
+	input_report_key(sc->input_dev, BTN_NORTH, rd[47]);
+	input_report_key(sc->input_dev, BTN_WEST, rd[48]);
+	input_report_key(sc->input_dev, BTN_SOUTH, rd[49]);
+
+	input_report_key(sc->input_dev, BTN_THUMBR, (rd[47] || rd[48] || rd[49]));
+
+	input_sync(sc->input_dev);
+}
+
 static int sony_raw_event(struct hid_device *hdev, struct hid_report *report,
 		u8 *rd, int size)
 {
@@ -1040,11 +1060,14 @@ static int sony_raw_event(struct hid_device *hdev, struct hid_report *report,
 	} else if ((sc->quirks & NSG_MRXU_REMOTE) && rd[0] == 0x02) {
 		nsg_mrxu_parse_report(sc, rd, size);
 		return 1;
-	} else if ((sc->quirks & RB4_GUITAR_PS4) && rd[0] == 0x01 && size == 64) {
+	} else if ((sc->quirks & RB4_GUITAR_PS4) && rd[0] == 0x01 && (size == 64 || size == 78)) {
 		rb4_ps4_guitar_parse_report(sc, rd, size);
 		return 1;
 	} else if ((sc->quirks & RB4_GUITAR_PS5) && rd[0] == 0x01 && size == 64) {
 		rb4_ps5_guitar_parse_report(sc, rd, size);
+		return 1;
+	} else if ((sc->quirks & RB4_DRUMSET_PS4) && rd[0] == 0x01 && size == 78) {
+		rb4_ps4_drumset_parse_report(sc, rd, size);
 		return 1;
 	}
 
@@ -1101,6 +1124,9 @@ static int sony_mapping(struct hid_device *hdev, struct hid_input *hi,
 		return rb4_guitar_mapping(hdev, hi, field, usage, bit, max);
 
 	if (sc->quirks & RB4_GUITAR_PS5)
+		return rb4_guitar_mapping(hdev, hi, field, usage, bit, max);
+
+	if (sc->quirks & RB4_DRUMSET_PS4)
 		return rb4_guitar_mapping(hdev, hi, field, usage, bit, max);
 
 	/* Let hid-core decide for the others */
@@ -2389,6 +2415,11 @@ static const struct hid_device_id sony_devices[] = {
 		.driver_data = RB4_GUITAR_PS5 },
 	{ HID_USB_DEVICE(USB_VENDOR_ID_CRKD, USB_DEVICE_ID_CRKD_PS5_GIBSON_SG),
 		.driver_data = RB4_GUITAR_PS5 },
+	/* Rock Band 4 PS4 drum sets */
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_PDP, USB_DEVICE_ID_PDP_PS4_DRUMSET),
+		.driver_data = RB4_DRUMSET_PS4 },
+	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_MADCATZ, USB_DEVICE_ID_MADCATZ_PS4_DRUMSET),
+		.driver_data = RB4_DRUMSET_PS4 },
 	{ }
 };
 MODULE_DEVICE_TABLE(hid, sony_devices);
